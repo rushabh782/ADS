@@ -1,53 +1,38 @@
 import pandas as pd
-import numpy as np
 
-# Load the dataset
-df = pd.read_csv('movies.csv')
+df = pd.read_csv('/content/sample_data/adult.csv')
 
-# 1. Clean 'YEAR' - Extract the year in YYYY format and convert to numeric
-df['YEAR'] = df['YEAR'].str.extract('(\d{4})').astype(float)
+print("Original Data:")
+print(df.head())
 
-# 2. Clean 'GENRE' - Remove extra spaces and quotes
-df['GENRE'] = df['GENRE'].str.strip().str.replace('"', '').str.replace(' ', ', ')
+# Steps for data cleaning 
+# Step 1: Handle the missing values
+df.replace('?',pd.NA,inplace=True)
 
-# 3. Clean 'RATING' - Handle missing values by filling with the mean
-df['RATING'] = pd.to_numeric(df['RATING'], errors='coerce')  # Convert to numeric, coercing errors
-df['RATING'] = df['RATING'].fillna(df['RATING'].mean())  # Fill missing ratings with the mean
+#Drop rows with missing values
+df.dropna(inplace=True)
 
-# 4. Clean 'VOTES' - Remove commas and convert to numeric
-df['VOTES'] = df['VOTES'].str.replace(',', '').astype(float)  # Remove commas and convert to float
-df['VOTES'] = df['VOTES'].fillna(df['VOTES'].mean())  # Fill missing votes with the mean
+#Srep 2 - Removing duplicate values
+df.drop_duplicates(inplace=True)
 
-# 5. Clean 'Gross' - Remove dollar signs, 'M' or 'B' and convert to numeric
-def clean_gross(value):
-    if isinstance(value, str):
-        value = value.replace('$', '').strip()
-        if 'M' in value:
-            value = float(value.replace('M', '').strip()) * 1_000_000
-        elif 'B' in value:
-            value = float(value.replace('B', '').strip()) * 1_000_000_000
-        else:
-            value = float(value)
-    return value
+#Step 3 - Correcting data types
+#convert income to category
+df['income']= df['income'].astype('category')
 
-df['Gross'] = df['Gross'].apply(clean_gross)
-df['Gross'] = df['Gross'].fillna(df['Gross'].mean())
+#convert education.num to integer
+df['education.num'] = df['education.num'].astype(int)
 
-# 6. Clean 'RunTime' - Remove spaces and convert to float
-df['RunTime'] = df['RunTime'].astype(str).str.replace(' ', '').astype(float)
-df['RunTime'] = df['RunTime'].fillna(df['RunTime'].mean())
+#Step 4 Renaming columns for consistency
+df.rename(columns={
+    'education.num':'education_num',
+    'marital.status':'marital_status',
+    'workclass':'work_class',
+    'capital.gain':'capital_gain',
+},inplace=True)
 
-# 7. Clean 'STARS' - Remove unwanted characters and extra spaces
-df['STARS'] = df['STARS'].str.replace(r'\n|\r', ', ', regex=True)
-df['STARS'] = df['STARS'].str.replace('Director:|Stars:', '', regex=True).str.strip()
-df['STARS'] = df['STARS'].fillna('Unknown')
 
-# 8. Clean 'ONE-LINE' - Trim extra spaces
-df['ONE-LINE'] = df['ONE-LINE'].str.strip()
+print('Cleaned Data:')
+print(df.head())
 
-# 9. Handle missing values in 'GENRE' (optional)
-df['GENRE'] = df['GENRE'].fillna('Unknown')
-
-# 10. Save cleaned dataset
-print("\nCleaned dataset:\n", df.head())
-df.to_csv('cleaned_movies.csv', index=False)
+#Save to csv
+df.to_csv('cleaned_adult_data.csv',index=False)
